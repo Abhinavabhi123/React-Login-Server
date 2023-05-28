@@ -22,11 +22,11 @@ module.exports={
                 }else if(isMatch){
                     adminSignup.Status=true;
                     adminSignup.name = adminData[0].Name
-                    const Adminname = adminData[0].name
+                    // const Adminname = adminData[0].name
                     let AdminToken = jwt.sign({id:adminData[0]._id},"Secretcode",{expiresIn:"24h"})
                     adminSignup.token = AdminToken
                     let obj={
-                        AdminToken,Adminname
+                        AdminToken
                     }
                     res.cookie("jwt",obj,{
                         httpOnly:false,maxAge:6000*1000,
