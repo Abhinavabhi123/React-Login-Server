@@ -40,7 +40,7 @@ module.exports={
         const {email,password} = req.body;
         let userData = await User.find({email:email})
         console.log(userData,"dataaa");
-        if(userData){
+        if(userData.length!==0){
             bcrypt.compare(password,userData[0].password,function(error,isMatch){
                 if(error){
                     userLogin.Status = false;
@@ -67,9 +67,32 @@ module.exports={
                 }
             })
         }else{
-            userLogin.message = "Your Email is wrong"
+            userLogin.message = "Your Email is wrong Check and try Again"
             userLogin.Status  =false
             res.send({userLogin})
         }
-    }
+    },
+    getProfile: async (req, res) => {
+        try {
+          if (!req.cookies || !req.cookies.jwt) {
+            return res.status(401).json({ error: "Unauthorized" });
+          } else {
+            const jwtToken = req.cookies.jwt.token;
+            const decodetoken = jwt.verify(jwtToken, "secretCodeforUser");
+      
+            const userId = decodetoken.id;
+            const user = await User.find({ _id: userId });
+      
+            if (!user) {
+              return res.status(404).json({ error: "User not found" });
+            }else{
+
+                return res.status(200).json({ user });
+            }
+          }
+        } catch (error) {
+          console.error("Error in userProfile", error);
+          res.status(500).json({ error: "Internal server error" });
+        }
+      }
 }

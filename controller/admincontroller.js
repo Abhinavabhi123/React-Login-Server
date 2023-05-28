@@ -1,7 +1,8 @@
 const Admin = require("../model/adminModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const User =require("../model/userModel");
+const User = require("../model/userModel");
+const { isObjectIdOrHexString } = require("mongoose");
 module.exports = {
   postAdminLogin: async (req, res) => {
     let adminSignup = {
@@ -56,29 +57,57 @@ module.exports = {
   },
   getUserDetails: async (req, res) => {
     try {
-        const jwtToken = jwt.verify(req.cookies.jwt.AdminToken,"Secretcode");
-       if(jwtToken){
-        User.find().then((data)=>{
-            res.send({data})
-        }).catch((error)=>{
-            res.status(500).send({error:error.message})
-        })
-       }
+      const jwtToken = jwt.verify(req.cookies.jwt.AdminToken, "Secretcode");
+      if (jwtToken) {
+        User.find()
+          .then((data) => {
+            res.send({ data });
+          })
+          .catch((error) => {
+            res.status(500).send({ error: error.message });
+          });
+      }
     } catch (error) {
-        res.status(401).send({ error: "Unauthorized" });
+      res.status(401).send({ error: "Unauthorized" });
     }
   },
-  deleteUser:async(req,res)=>{
-    console.log(req.params.id,"is here")
-    const jwtToken = jwt.verify(req.cookies.jwt.AdminToken,"Secretcode");
-    if(jwtToken){
-        await User.deleteOne({_id:req.params.id}).then(()=>{
-          console.log("deleted...")
-            res.status(200)
-        })
+  deleteUser: async (req, res) => {
+    console.log(req.params.id, "is here");
+    const jwtToken = jwt.verify(req.cookies.jwt.AdminToken, "Secretcode");
+    if (jwtToken) {
+      await User.deleteOne({ _id: req.params.id }).then(() => {
+        console.log("deleted...");
+        res.status(200);
+      });
     }
   },
-  editUser:async(req,res)=>{
-    
-  }
+  editUser: async (req, res) => {
+    const obj = {
+      message: null,
+      edited: null,
+    };
+    const jwtToken = jwt.verify(req.cookies.jwt.AdminToken, "Secretcode");
+    if (jwtToken) {
+      const { userId, editedUserFname, editedUserLname, editedUserEmail } =
+        req.body;
+      const userData = await User.find({ _id: userId });
+      if (userData.length > 0) {
+        User.updateOne(
+          { _id: userId },
+          {
+            $set: {
+              firstName: editedUserFname,
+              lastName: editedUserLname,
+              email: editedUserEmail,
+            },
+          }
+        ).then(() => {
+          obj.edited = true;
+          res.status(200).send(obj);
+        });
+      } else {
+        obj.message = "User not there";
+      }
+    }
+  },
 };
